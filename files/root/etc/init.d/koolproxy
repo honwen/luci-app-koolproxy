@@ -1,0 +1,195 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+EXTRA_COMMANDS="rules watchdog"
+NAME=koolproxy
+
+CRON_FILE=/etc/crontabs/root
+
+wget_f="wget --no-check-certificate"
+ipt_n="iptables -t nat"
+ipt_m="iptables -t mangle"
+
+uci_get_by_name() {
+	local ret=$(uci get $NAME.$1.$2 2>/dev/null)
+	echo ${ret:=$3}
+}
+
+uci_get_by_type() {
+	local ret=$(uci get $NAME.@$1[0].$2 2>/dev/null)
+	echo ${ret:=$3}
+}
+
+uci_bool_by_name() {
+	case "$(uci_get_by_name $1 $2)" in
+		1|on|true|yes|enabled) return 0;;
+	esac
+	return 1
+}
+
+uci_bool_by_type() {
+	case "$(uci_get_by_type $1 $2)" in
+		1|on|true|yes|enabled) return 0;;
+	esac
+	return 1
+}
+
+detect_arch() {
+	if [ -x /lib/ar71xx.sh ]; then
+		echo "mips"
+	elif [ -x /lib/ramips.sh ]; then
+		echo "mipsel"
+	elif [ -x brcm2708.sh ]; then
+		echo "arm"
+	elif [ 0 -lt $(uname -m | grep -c 'x86_64') ]; then
+		echo "x86_64"
+	else
+		echo "i386"
+	fi
+}
+
+kill_all() {
+	kill -9 $(pgrep -f $@) >/dev/null 2>&1
+}
+
+ipset_init() {
+	ipset -! restore <<-EOF || return 1
+		create koolproxy_bp hash:net hashsize 64
+		$(gen_special_purpose_ip | sed -e "s/^/add koolproxy_bp /")
+EOF
+	return 0
+}
+
+gen_special_purpose_ip() {
+	cat <<-EOF | grep -E "^([0-9]{1,3}\.){3}[0-9]{1,3}"
+		0.0.0.0/8
+		10.0.0.0/8
+		100.64.0.0/10
+		127.0.0.0/8
+		169.254.0.0/16
+		172.16.0.0/12
+		192.0.0.0/24
+		192.0.2.0/24
+		192.31.196.0/24
+		192.52.193.0/24
+		192.88.99.0/24
+		192.168.0.0/16
+		192.175.48.0/24
+		198.18.0.0/15
+		198.51.100.0/24
+		203.0.113.0/24
+		224.0.0.0/4
+		240.0.0.0/4
+		255.255.255.255
+EOF
+}
+
+delay_start() {
+	(sleep $1 && start >/dev/null 2>&1) &
+}
+
+boot() {
+	local delay=$(uci_get_by_type general start_delay 0)
+	if [ "$delay" -gt 0 ]; then
+		delay_start $delay
+	else
+		start
+	fi
+	return 0
+}
+
+start() {
+	add_cron
+	start_kp && rules
+}
+
+stop() {
+	del_cron
+	flush_rules
+	kill_all /var/run/${NAME}/kp
+	rm -rf /var/run/${NAME}/data
+	[ 5 -lt $(/var/run/${NAME}/kp -v 2>/dev/null | wc -c) ] || rm -rf /var/run/${NAME}/kp
+}
+
+restart(){
+	# force update by delete
+	stop
+	rm -rf /var/run/${NAME}
+	start
+}
+
+start_kp() {
+	mkdir -p /var/run/${NAME}/data/rules
+	$wget_f 'https://kprule.com/kp.dat'        -qO /var/run/${NAME}/data/rules/kp.dat
+	$wget_f 'https://kprule.com/koolproxy.txt' -qO /var/run/${NAME}/data/rules/koolproxy.txt
+	$wget_f 'https://kprule.com/daily.txt'     -qO /var/run/${NAME}/data/rules/daily.txt
+	ln -sf /etc/${NAME}/user.txt /var/run/${NAME}/data/rules/user.txt
+
+	[ -x /var/run/${NAME}/kp ] || {
+		$wget_f "https://koolproxy.com/downloads/$(detect_arch)" -qO /var/run/${NAME}/kp
+		chmod +x /var/run/${NAME}/kp
+	}
+
+	( /var/run/${NAME}/kp > /dev/null 2>&1 ) &
+
+	return 0
+}
+
+rules() {
+	if !(pgrep -f /var/run/${NAME}/kp >/dev/null); then
+		logger -st $NAME -p3 "${NAME} not running."
+		return 1
+	fi
+	start_rules || flush_rules
+}
+
+start_rules() {
+	flush_rules
+	ipset_init
+
+	$ipt_n -N KOOLPROXY
+	$ipt_n -A KOOLPROXY -m set --match-set koolproxy_bp dst -j RETURN
+	$ipt_n -A KOOLPROXY -p tcp -j REDIRECT --to-port 3000
+
+	# ipset create koolproxy hash:ip > /dev/null 2>&1
+	idx=$($ipt_n -L PREROUTING | tail -n +3 | sed -n -e '/^SSR*_SPEC/=')
+	$ipt_n -I PREROUTING $((${idx} + 1)) -p tcp --dport 80 -m set --match-set ${NAME} dst -j KOOLPROXY
+	$ipt_m -I PREROUTING -p tcp --dport 80 -m set --match-set ${NAME} dst -j RETURN
+}
+
+flush_rules() {
+	while $ipt_m -D PREROUTING -p tcp --dport 80 -m set --match-set ${NAME} dst -j RETURN > /dev/null 2>&1; do :; done
+	while $ipt_n -D PREROUTING -p tcp --dport 80 -m set --match-set ${NAME} dst -j KOOLPROXY > /dev/null 2>&1; do :; done
+	$ipt_n -F KOOLPROXY > /dev/null 2>&1
+	while $ipt_n -X KOOLPROXY > /dev/null 2>&1; do :; done
+	ipset -F koolproxy_bp 2>/dev/null
+	ipset -X koolproxy_bp 2>/dev/null
+}
+
+add_cron() {
+	sed -i '/koolproxy_watchdog/d' $CRON_FILE
+	echo '0   */3   * * *  rm -f /var/log/koolproxy_watchdog.log 2>&1' >> $CRON_FILE
+	echo '*    *    * * * /etc/init.d/koolproxy watchdog >> /var/log/koolproxy_watchdog.log 2>&1' >> $CRON_FILE
+	echo '0    4    * * * /etc/init.d/koolproxy restart >> /var/log/koolproxy_watchdog.log 2>&1' >> $CRON_FILE
+	/etc/init.d/cron restart
+}
+
+del_cron() {
+	sed -i '/koolproxy_watchdog/d' $CRON_FILE
+	/etc/init.d/cron restart
+}
+
+watchdog() {
+	uci_bool_by_type general enable || return 0
+
+	LOGTIME=$(date "+%Y-%m-%d %H:%M:%S")
+
+	if [ "Z$(pgrep -f /var/run/${NAME}/kp)" = "Z" ]; then
+		echo "[${LOGTIME}] Problem decteted, restarting ${NAME}..."
+		restart
+	else
+		echo "[${LOGTIME}] ${NAME} No Problem."
+	fi
+
+	return 0
+}

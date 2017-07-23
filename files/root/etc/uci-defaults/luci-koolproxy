@@ -1,0 +1,15 @@
+#!/bin/sh 
+
+uci -q batch <<-EOF >/dev/null
+	delete ucitrack.@koolproxy[-1]
+	add ucitrack koolproxy
+	set ucitrack.@koolproxy[-1].init=koolproxy
+	commit ucitrack
+	delete firewall.koolproxy
+	set firewall.koolproxy=include
+	set firewall.koolproxy.type=script
+	set firewall.koolproxy.path=/etc/koolproxy/firewall.include
+	set firewall.koolproxy.reload=1
+	commit firewall
+EOF
+exit 0
