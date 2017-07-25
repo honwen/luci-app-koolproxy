@@ -54,8 +54,12 @@ kill_all() {
 
 ipset_init() {
 	ipset -! restore <<-EOF || return 1
-		create koolproxy_bp hash:net hashsize 64
-		$(gen_special_purpose_ip | sed -e "s/^/add koolproxy_bp /")
+		create kp_dst_bp hash:net hashsize 64
+		create kp_src_bp hash:net hashsize 64
+		$(gen_special_purpose_ip | sed -e "s/^/add kp_dst_bp /")
+		$(for lan in $(uci_get_by_type general lan_bp_list); do
+			echo "add kp_src_bp $lan"
+		done)
 EOF
 	return 0
 }
@@ -148,7 +152,8 @@ start_rules() {
 	ipset_init
 
 	$ipt_n -N KOOLPROXY
-	$ipt_n -A KOOLPROXY -m set --match-set koolproxy_bp dst -j RETURN
+	$ipt_n -A KOOLPROXY -m set --match-set kp_src_bp src -j RETURN
+	$ipt_n -A KOOLPROXY -m set --match-set kp_dst_bp dst -j RETURN
 	$ipt_n -A KOOLPROXY -p tcp -j REDIRECT --to-port 3000
 
 	# ipset create koolproxy hash:ip > /dev/null 2>&1
@@ -162,8 +167,9 @@ flush_rules() {
 	while $ipt_n -D PREROUTING -p tcp --dport 80 -m set --match-set ${NAME} dst -j KOOLPROXY > /dev/null 2>&1; do :; done
 	$ipt_n -F KOOLPROXY > /dev/null 2>&1
 	while $ipt_n -X KOOLPROXY > /dev/null 2>&1; do :; done
-	ipset -F koolproxy_bp 2>/dev/null
-	ipset -X koolproxy_bp 2>/dev/null
+	for setname in $(ipset -n list | grep "kp_"); do
+		ipset destroy $setname 2>/dev/null
+	done
 }
 
 add_cron() {
