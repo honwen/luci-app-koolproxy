@@ -28,7 +28,8 @@ OpenWrt/LEDE LuCI for KoolProxy
         └── lua/
             └── luci/                            // LuCI 部分
                 ├── controller/
-                │   └── koolproxy.lua            // LuCI 菜单配置
+                │   ├── koolproxy-custom.lua     // LuCI 菜单配置：用户自定义规则
+                │   └── koolproxy-general.lua    // LuCI 菜单配置：基本设置
                 ├── i18n/                        // LuCI 语言文件目录
                 │   └── koolproxy.zh-cn.lmo
                 └── model/
