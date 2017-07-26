@@ -41,6 +41,10 @@ LuCI 部分待完成
 ---
 软件包的正常使用需要依赖 ```wget, dnsmasq-full, iptables, ipset``` 和 [dnsmasq-extra][openwrt-dnsmasq-extra].  
 
+预览
+---
+![preview](https://github.com/chenhw2/luci-app-koolproxy/blob/master/preview.png)
+
 配置
 ---
 
