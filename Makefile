@@ -7,7 +7,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-koolproxy
-PKG_VERSION:=0.1.2
+PKG_VERSION:=0.1.3
 PKG_RELEASE:=1
 
 PKG_LICENSE:=MIT
@@ -32,6 +32,8 @@ define Package/luci-app-koolproxy/description
 endef
 
 define Build/Prepare
+	$(foreach po,$(wildcard ${CURDIR}/files/luci/i18n/*.po), \
+		po2lmo $(po) $(PKG_BUILD_DIR)/$(patsubst %.po,%.lmo,$(notdir $(po)));)
 endef
 
 define Build/Configure
@@ -62,6 +64,12 @@ define Package/luci-app-koolproxy/conffiles
 endef
 
 define Package/luci-app-koolproxy/install
+	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/i18n
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/koolproxy.*.lmo $(1)/usr/lib/lua/luci/i18n/
+	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/controller
+	$(INSTALL_DATA) ./files/luci/controller/*.lua $(1)/usr/lib/lua/luci/controller/
+	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/model/cbi
+	$(INSTALL_DATA) ./files/luci/model/cbi/*.lua $(1)/usr/lib/lua/luci/model/cbi/
 	$(INSTALL_DIR) $(1)/etc/koolproxy
 	$(INSTALL_DATA) ./files/root/etc/koolproxy/{firewall.include,user.txt} $(1)/etc/koolproxy/
 	$(INSTALL_DIR) $(1)/etc/config
