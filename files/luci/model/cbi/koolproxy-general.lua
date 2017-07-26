@@ -15,6 +15,24 @@ s.anonymous = true
 o = s:option(Flag, "enable", translate("Enable"))
 o.rmempty = false
 
+if luci.sys.call("command -v /var/run/koolproxy/kp >/dev/null") == 0 then
+	o = s:option(DummyValue, "stat0", "%s %s" %{translate("KoolProxy"), translate("Version")})
+	o.value=string.format("[ %s ]", luci.sys.exec("/var/run/koolproxy/kp -v"))
+
+	o = s:option(DummyValue, "stat1", "%s-%s %s" %{translate("KoolProxy"), translate("Rules"), translate("Version")})
+	o.value=string.format("%s", luci.sys.exec("head /var/run/koolproxy/data/rules/koolproxy.txt | sed -n '/]$/d; s/.*\\[/[/p'"))
+
+	o = s:option(DummyValue, "stat2", "%s-%s %s" %{translate("KoolProxy"), translate("Rules"), translate("Counts")})
+	o.value=string.format("[ %s ]", luci.sys.exec("sed '/^!/d' /var/run/koolproxy/data/rules/koolproxy.txt | wc -l"))
+
+	o = s:option(DummyValue, "stat3", "%s-%s %s" %{translate("User Custom"), translate("Rules"), translate("Counts")})
+	o.value=string.format("[ %s ]", luci.sys.exec("sed '/^!/d' /var/run/koolproxy/data/rules/user.txt | wc -l"))
+
+	o = s:option(DummyValue, "stat4", "%s-%s %s" %{translate("ADBlock"), translate("Hosts"), translate("Counts")})
+	o.value=string.format("[ %s ]", luci.sys.exec("wc -l /var/dnsmasq.d/adblock.conf | sed 's/ .*//g'"))
+
+end
+
 o = s:option(Value, "startup_delay", translate("Startup Delay"))
 o:value(0, translate("Not enabled"))
 for _, v in ipairs({5, 10, 15, 25, 40, 60, 120}) do

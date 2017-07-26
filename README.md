@@ -3,7 +3,6 @@ OpenWrt/LEDE LuCI for KoolProxy
 
 前言
 ---
-LuCI 部分待完成
 感謝 [koolshare.cn][koolshare] 提供 ```KoolProxy```, 使用风险由用户自行承担  
 本程序运行需要联网下载最新的 ```KoolProxy``` 到内存中运行, 也正因此本程序大小可以忽略不计.  
 

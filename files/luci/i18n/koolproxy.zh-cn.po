@@ -9,3 +9,18 @@ msgstr "基本设置"
 
 msgid "ByPass LAN"
 msgstr "不去广告的内网主机"
+
+msgid "Version"
+msgstr "版本"
+
+msgid "Rules"
+msgstr "规则"
+
+msgid "User Custom"
+msgstr "用户自定义"
+
+msgid "Counts"
+msgstr "数量"
+
+msgid "ADBlock"
+msgstr "广告阻断"

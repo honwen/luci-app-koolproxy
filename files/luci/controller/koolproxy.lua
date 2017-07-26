@@ -9,10 +9,14 @@ function index()
 		_("KoolProxy"), 50)
 
 	entry({"admin", "services", "koolproxy", "general"},
-		cbi("koolproxy"), _("General Settings"), 20).leaf = true
+		cbi("koolproxy-general"), _("General Settings"), 10).leaf = true
+
+	entry({"admin", "services", "koolproxy", "custom"},
+		cbi("koolproxy-custom"), _("User Custom"), 20).leaf = true
 
 	entry({"admin", "services", "koolproxy", "log"},
 		call("action_log"), _("System Log"), 30).leaf = true
+
 end
 
 function action_log()
