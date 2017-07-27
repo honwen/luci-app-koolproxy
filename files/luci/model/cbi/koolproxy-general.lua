@@ -26,7 +26,7 @@ if luci.sys.call("command -v /var/run/koolproxy/kp >/dev/null") == 0 then
 	o.value=string.format("[ %s ]", luci.sys.exec("sed '/^!/d' /var/run/koolproxy/data/rules/koolproxy.txt | wc -l"))
 
 	o = s:option(DummyValue, "stat3", "%s-%s %s" %{translate("User Custom"), translate("Rules"), translate("Counts")})
-	o.value=string.format("[ %s ]", luci.sys.exec("sed '/^!/d' /var/run/koolproxy/data/rules/user.txt | wc -l"))
+	o.value=string.format("[ %s ]", luci.sys.exec("sed '/^!/d; /^[ \\t]*$/d' /var/run/koolproxy/data/rules/user.txt | wc -l"))
 
 	o = s:option(DummyValue, "stat4", "%s-%s %s" %{translate("ADBlock"), translate("Hosts"), translate("Counts")})
 	o.value=string.format("[ %s ]", luci.sys.exec("wc -l /var/dnsmasq.d/adblock.conf | sed 's/ .*//g'"))
