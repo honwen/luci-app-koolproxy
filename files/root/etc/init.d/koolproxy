@@ -6,7 +6,7 @@ NAME=koolproxy
 
 CRON_FILE=/etc/crontabs/root
 
-wget_f="wget --no-check-certificate"
+curl_f="curl -ksSL"
 ipt_n="iptables -t nat"
 ipt_m="iptables -t mangle"
 
@@ -124,13 +124,13 @@ restart(){
 
 start_kp() {
 	mkdir -p /var/run/${NAME}/data/rules
-	$wget_f 'https://kprule.com/kp.dat'        -qO /var/run/${NAME}/data/rules/kp.dat
-	$wget_f 'https://kprule.com/koolproxy.txt' -qO /var/run/${NAME}/data/rules/koolproxy.txt
-	$wget_f 'https://kprule.com/daily.txt'     -qO /var/run/${NAME}/data/rules/daily.txt
+	$curl_f 'https://kprule.com/kp.dat'        > /var/run/${NAME}/data/rules/kp.dat
+	$curl_f 'https://kprule.com/koolproxy.txt' > /var/run/${NAME}/data/rules/koolproxy.txt
+	$curl_f 'https://kprule.com/daily.txt'     > /var/run/${NAME}/data/rules/daily.txt
 	ln -sf /etc/${NAME}/user.txt /var/run/${NAME}/data/rules/user.txt
 
 	[ -x /var/run/${NAME}/kp ] || {
-		$wget_f "https://koolproxy.com/downloads/$(detect_arch)" -qO /var/run/${NAME}/kp
+		$curl_f "https://koolproxy.com/downloads/$(detect_arch)" > /var/run/${NAME}/kp
 		chmod +x /var/run/${NAME}/kp
 	}
 

@@ -39,7 +39,7 @@ OpenWrt/LEDE LuCI for KoolProxy
 
 依赖
 ---
-软件包的正常使用需要依赖 ```wget, dnsmasq-full, iptables, ipset``` 和 [dnsmasq-extra][openwrt-dnsmasq-extra].  
+软件包的正常使用需要依赖 ```curl, dnsmasq-full, iptables, ipset``` 和 [dnsmasq-extra][openwrt-dnsmasq-extra].  
 
 预览
 ---

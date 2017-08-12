@@ -1,4 +1,4 @@
 
 config general
 	option enable 1
-	option startup_delay '30'
+	option startup_delay '25'

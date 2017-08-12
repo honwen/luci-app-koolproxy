@@ -24,7 +24,7 @@ define Package/luci-app-koolproxy
 	SUBMENU:=3. Applications
 	TITLE:=LuCI Support for KoolProxy
 	PKGARCH:=all
-	DEPENDS:=+wget +ipset
+	DEPENDS:=+curl +ipset
 endef
 
 define Package/luci-app-koolproxy/description
