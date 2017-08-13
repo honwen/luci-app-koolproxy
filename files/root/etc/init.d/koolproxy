@@ -39,7 +39,7 @@ detect_arch() {
 		echo "mips"
 	elif [ -x /lib/ramips.sh ]; then
 		echo "mipsel"
-	elif [ -x brcm2708.sh ]; then
+	elif [ -x /lib/brcm2708.sh ]; then
 		echo "arm"
 	elif [ 0 -lt $(uname -m | grep -c 'x86_64') ]; then
 		echo "x86_64"
@@ -55,7 +55,7 @@ kill_all() {
 ipset_init() {
 	ipset -! restore <<-EOF || return 1
 		create kp_dst_bp hash:net hashsize 64
-		create kp_src_bp hash:net hashsize 64
+		create kp_src_bp hash:mac hashsize 64
 		$(gen_special_purpose_ip | sed -e "s/^/add kp_dst_bp /")
 		$(for lan in $(uci_get_by_type general lan_bp_list); do
 			echo "add kp_src_bp $lan"
@@ -112,7 +112,9 @@ stop() {
 	flush_rules
 	kill_all /var/run/${NAME}/kp
 	rm -rf /var/run/${NAME}/data
-	[ 5 -lt $(/var/run/${NAME}/kp -v 2>/dev/null | wc -c) ] || rm -rf /var/run/${NAME}/kp
+
+	# delete main program only if it is broken
+	[ 5 -lt $(/var/run/${NAME}/kp -h 2>/dev/null | wc -l) ] || rm -rf /var/run/${NAME}/kp
 }
 
 restart(){
@@ -129,12 +131,12 @@ start_kp() {
 	$curl_f 'https://kprule.com/daily.txt'     > /var/run/${NAME}/data/rules/daily.txt
 	ln -sf /etc/${NAME}/user.txt /var/run/${NAME}/data/rules/user.txt
 
-	[ -x /var/run/${NAME}/kp ] || {
+	[ 5 -lt $(/var/run/${NAME}/kp -h 2>/dev/null | wc -l) ] || {
 		$curl_f "https://koolproxy.com/downloads/$(detect_arch)" > /var/run/${NAME}/kp
 		chmod +x /var/run/${NAME}/kp
 	}
 
-	( /var/run/${NAME}/kp > /dev/null 2>&1 ) &
+	/var/run/${NAME}/kp -d
 
 	return 0
 }

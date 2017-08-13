@@ -42,14 +42,11 @@ o.datatype = "uinteger"
 o.default  = 0
 o.rmempty  = false
 
-o = s:option(DynamicList, "lan_bp_list", translate("ByPass LAN"), translate("e.g. 192.168.1.100"))
-luci.ip.neighbors({family = 4}, function(neighbor)
-	if neighbor.reachable then
-		o:value(neighbor.dest:string(), "%s (%s)" %{neighbor.dest:string(), neighbor.mac})
-	end
+o = s:option(DynamicList, "lan_bp_list", translate("ByPass LAN"), translate("e.g. aa:bb:cc:dd:ee:ff"))
+luci.sys.net.mac_hints(function(mac, name)
+	o:value(mac, "%s (%s)" %{mac, name})
 end)
-o.placeholder = "8.8.8.8:53"
-o.datatype    = 'network'
-o.rmempty     = false
+o.datatype = "macaddr"
+o.rmempty = false
 
 return m
