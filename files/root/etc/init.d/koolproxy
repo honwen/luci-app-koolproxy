@@ -47,7 +47,7 @@ ipset_init() {
 		$(gen_special_purpose_ip | sed -e "s/^/add kp_dst_bp /")
 		$(for lan in $(uci_get_by_type general lan_bp_list); do
 			echo "add kp_src_bp $lan"
-		done)
+		done | grep -v '00:00:00:00:00:00')
 EOF
 	return 0
 }

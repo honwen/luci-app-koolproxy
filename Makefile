@@ -70,6 +70,8 @@ define Package/luci-app-koolproxy/install
 	$(INSTALL_DATA) ./files/luci/controller/*.lua $(1)/usr/lib/lua/luci/controller/
 	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/model/cbi
 	$(INSTALL_DATA) ./files/luci/model/cbi/*.lua $(1)/usr/lib/lua/luci/model/cbi/
+	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/view/koolproxy
+	$(INSTALL_DATA) ./files/luci/view/koolproxy/*.htm $(1)/usr/lib/lua/luci/view/koolproxy/
 	$(INSTALL_DIR) $(1)/etc/koolproxy
 	$(INSTALL_DATA) ./files/root/etc/koolproxy/{firewall.include,user.txt} $(1)/etc/koolproxy/
 	$(INSTALL_DIR) $(1)/etc/config

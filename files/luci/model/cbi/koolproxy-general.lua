@@ -49,6 +49,9 @@ o:value("--dport 80:88", translatef("Proxy port numbers %s only", "80~88"))
 o:value("-m multiport --dports 80,88,8080", translatef("Proxy port numbers %s only", "80,88,8080"))
 
 o = s:option(DynamicList, "lan_bp_list", translate("ByPass LAN"), translate("e.g. aa:bb:cc:dd:ee:ff"))
+o.template = "koolproxy/dynamiclist"
+o:value("00:00:00:00:00:00", "%s (%s)" %{"00:00:00:00:00:00", "NULL"})
+o.placeholder = "00:00:00:00:00:00"
 luci.sys.net.mac_hints(function(mac, name)
 	o:value(mac, "%s (%s)" %{mac, name})
 end)
