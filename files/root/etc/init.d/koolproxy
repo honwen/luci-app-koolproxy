@@ -111,6 +111,7 @@ stop() {
 	del_cron
 	flush_rules
 	kill_all /var/run/${NAME}/kp
+	kill_all 'koolproxy.com/downloads'
 	rm -rf /var/run/${NAME}/data
 
 	# delete main program only if it is broken
@@ -126,9 +127,7 @@ restart(){
 
 start_kp() {
 	mkdir -p /var/run/${NAME}/data/rules
-	$curl_f 'https://kprule.com/kp.dat'        > /var/run/${NAME}/data/rules/kp.dat
-	$curl_f 'https://kprule.com/koolproxy.txt' > /var/run/${NAME}/data/rules/koolproxy.txt
-	$curl_f 'https://kprule.com/daily.txt'     > /var/run/${NAME}/data/rules/daily.txt
+	# koolproxy will download {kp.dat, koolproxy.txt, daily.txt} itself.
 	ln -sf /etc/${NAME}/user.txt /var/run/${NAME}/data/rules/user.txt
 
 	[ 5 -lt $(/var/run/${NAME}/kp -h 2>/dev/null | wc -l) ] || {
@@ -138,7 +137,7 @@ start_kp() {
 
 	/var/run/${NAME}/kp -d
 
-	return 0
+	return $?
 }
 
 rules() {
@@ -178,7 +177,7 @@ add_cron() {
 	sed -i '/koolproxy_watchdog/d' $CRON_FILE
 	echo '0   */3   * * *  rm -f /var/log/koolproxy_watchdog.log 2>&1' >> $CRON_FILE
 	echo '*    *    * * * /etc/init.d/koolproxy watchdog >> /var/log/koolproxy_watchdog.log 2>&1' >> $CRON_FILE
-	echo '0    4    * * * /etc/init.d/koolproxy restart >> /var/log/koolproxy_watchdog.log 2>&1' >> $CRON_FILE
+	echo '0    4    * * * /etc/init.d/koolproxy restart  >> /var/log/koolproxy_watchdog.log 2>&1' >> $CRON_FILE
 	/etc/init.d/cron restart
 }
 
