@@ -42,6 +42,12 @@ o.datatype = "uinteger"
 o.default  = 0
 o.rmempty  = false
 
+o = s:option(Value, "ipt_ext", translate("Extra arguments"),
+	translate("Passes additional arguments to iptables. Use with care!"))
+o:value("", translate("None"))
+o:value("--dport 80:88", translatef("Proxy port numbers %s only", "80~88"))
+o:value("-m multiport --dports 80,88,8080", translatef("Proxy port numbers %s only", "80,88,8080"))
+
 o = s:option(DynamicList, "lan_bp_list", translate("ByPass LAN"), translate("e.g. aa:bb:cc:dd:ee:ff"))
 luci.sys.net.mac_hints(function(mac, name)
 	o:value(mac, "%s (%s)" %{mac, name})

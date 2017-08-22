@@ -10,21 +10,9 @@ curl_f="curl -ksSL"
 ipt_n="iptables -t nat"
 ipt_m="iptables -t mangle"
 
-uci_get_by_name() {
-	local ret=$(uci get $NAME.$1.$2 2>/dev/null)
-	echo ${ret:=$3}
-}
-
 uci_get_by_type() {
 	local ret=$(uci get $NAME.@$1[0].$2 2>/dev/null)
 	echo ${ret:=$3}
-}
-
-uci_bool_by_name() {
-	case "$(uci_get_by_name $1 $2)" in
-		1|on|true|yes|enabled) return 0;;
-	esac
-	return 1
 }
 
 uci_bool_by_type() {
@@ -158,14 +146,15 @@ start_rules() {
 	$ipt_n -A KOOLPROXY -p tcp -j REDIRECT --to-port 3000
 
 	# ipset create koolproxy hash:ip > /dev/null 2>&1
+	ipt_ext=$(uci_get_by_type general ipt_ext '--dport 80')
 	idx=$($ipt_n -L PREROUTING | tail -n +3 | sed -n -e '/^SSR*_SPEC/=')
-	$ipt_n -I PREROUTING $((${idx} + 1)) -p tcp --dport 80 -m set --match-set ${NAME} dst -j KOOLPROXY
-	$ipt_m -I PREROUTING -p tcp --dport 80 -m set --match-set ${NAME} dst -j RETURN
+	$ipt_n -I PREROUTING $((${idx} + 1)) -p tcp ${ipt_ext} -m set --match-set ${NAME} dst -j KOOLPROXY
+	$ipt_m -I PREROUTING -p tcp ${ipt_ext} -m set --match-set ${NAME} dst -j RETURN
 }
 
 flush_rules() {
-	while $ipt_m -D PREROUTING -p tcp --dport 80 -m set --match-set ${NAME} dst -j RETURN > /dev/null 2>&1; do :; done
-	while $ipt_n -D PREROUTING -p tcp --dport 80 -m set --match-set ${NAME} dst -j KOOLPROXY > /dev/null 2>&1; do :; done
+	$ipt_n -nL --line-numbers | sed -n 's/ .*koolproxy.*//p' | sort -r | while read idx; do $ipt_n -D PREROUTING $idx; done
+	$ipt_m -nL --line-numbers | sed -n 's/ .*koolproxy.*//p' | sort -r | while read idx; do $ipt_m -D PREROUTING $idx; done
 	$ipt_n -F KOOLPROXY > /dev/null 2>&1
 	while $ipt_n -X KOOLPROXY > /dev/null 2>&1; do :; done
 	for setname in $(ipset -n list | grep "kp_"); do
