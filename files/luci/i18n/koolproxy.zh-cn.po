@@ -36,3 +36,6 @@ msgstr "仅代理 %s 端口"
 
 msgid "Passes additional arguments to iptables. Use with care!"
 msgstr "传递到iptables的额外参数。小心使用！"
+
+msgid "KP-List"
+msgstr "去广告域名列表"

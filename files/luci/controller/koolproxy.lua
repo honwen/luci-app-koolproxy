@@ -17,6 +17,13 @@ function index()
 	entry({"admin", "services", "koolproxy", "log"},
 		call("action_log"), _("System Log"), 30).leaf = true
 
+	if luci.sys.call("command -v /etc/init.d/dnsmasq-extra >/dev/null") ~= 0 then
+		return
+	end
+
+	entry({"admin", "services", "koolproxy", "kplist"},
+		call("action_kplist"), _("KP-List"), 15).leaf = true
+
 end
 
 function action_log()
@@ -24,4 +31,11 @@ function action_log()
 	local conffile = "/var/log/koolproxy_watchdog.log"
 	local watchdog = fs.readfile(conffile) or ""
 	luci.template.render("admin_status/syslog", {syslog=watchdog})
+end
+
+function action_kplist()
+	local fs = require "nixio.fs"
+	local conffile = "/etc/dnsmasq-extra.d/koolproxy"
+	local kplist = fs.readfile(conffile) or ""
+	luci.template.render("/koolproxy/kplist", {kplist=kplist})
 end
