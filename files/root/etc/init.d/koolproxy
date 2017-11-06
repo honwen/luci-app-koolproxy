@@ -81,6 +81,8 @@ delay_start() {
 }
 
 boot() {
+	uci_bool_by_type general enable || return 0
+
 	local delay=$(uci_get_by_type general start_delay 0)
 	if [ "$delay" -gt 0 ]; then
 		delay_start $delay
@@ -91,6 +93,8 @@ boot() {
 }
 
 start() {
+	uci_bool_by_type general enable || return 0
+
 	add_cron
 	start_kp && rules
 }
@@ -176,7 +180,10 @@ del_cron() {
 }
 
 watchdog() {
-	uci_bool_by_type general enable || return 0
+	uci_bool_by_type general enable || {
+		del_cron
+		return 0
+	}
 
 	LOGTIME=$(date "+%Y-%m-%d %H:%M:%S")
 
