@@ -188,11 +188,29 @@ watchdog() {
 	LOGTIME=$(date "+%Y-%m-%d %H:%M:%S")
 
 	if [ "Z$(pgrep -f /var/run/${NAME}/kp)" = "Z" ]; then
-		echo "[${LOGTIME}] Problem decteted, restarting ${NAME}..."
+        echo "[${LOGTIME}] Problem(0x01) decteted, restarting ${NAME}..."
 		restart
-	else
-		echo "[${LOGTIME}] ${NAME} No Problem."
+		return $?
 	fi
+ 
+	# Check data: daily.txt  koolproxy.txt  kp.dat  user.txt
+	if [ $(ls -l /var/run/${NAME}/data/rules/ | wc -l) -lt 4 ]; then
+		echo "[${LOGTIME}] Problem(0x02) decteted, restarting ${NAME}..."
+		restart
+		return $?
+	fi
+
+	for kp_data in $(ls /var/run/${NAME}/data/rules/ | grep -v user); do
+		kp_data="/var/run/${NAME}/data/rules/${kp_data}"
+		if [ ! -f "$kp_data" ] || [ $(ls -l "$kp_data" | awk '{print $5}') -lt 2000 ]; then
+			echo "[${LOGTIME}] Problem(0x04) decteted, restarting ${NAME}..."
+			restart
+			return $?
+		fi
+	done
+
+	echo "[${LOGTIME}] ${NAME} No Problem."
 
 	return 0
 }
+
