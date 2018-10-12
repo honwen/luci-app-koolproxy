@@ -202,7 +202,7 @@ watchdog() {
 
 	for kp_data in $(ls /var/run/${NAME}/data/rules/ | grep -v user); do
 		kp_data="/var/run/${NAME}/data/rules/${kp_data}"
-		if [ ! -f "$kp_data" ] || [ $(ls -l "$kp_data" | awk '{print $5}') -lt 2000 ]; then
+		if [ ! -f "$kp_data" ] || [ $(ls -l "$kp_data" | awk '{print $5}') -lt 256 ]; then
 			echo "[${LOGTIME}] Problem(0x04) decteted, restarting ${NAME}..."
 			restart
 			return $?
