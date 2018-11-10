@@ -31,6 +31,8 @@ detect_arch() {
 		echo "arm"
 	elif [ 0 -lt $(uname -m | grep -c 'x86_64') ]; then
 		echo "x86_64"
+	elif [ 0 -lt $(uname -m | grep -c 'armv7l') ]; then
+		echo "arm"
 	else
 		echo "i386"
 	fi
