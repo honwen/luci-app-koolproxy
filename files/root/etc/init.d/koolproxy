@@ -23,7 +23,7 @@ uci_bool_by_type() {
 }
 
 detect_arch() {
-	if [ -x /lib/ar71xx.sh ]; then
+	if [ -x /lib/ar71xx.sh -o -x /lib/functions/k2t.sh ]; then
 		echo "mips"
 	elif [ -x /lib/ramips.sh ]; then
 		echo "mipsel"
