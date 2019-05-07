@@ -1,5 +1,6 @@
 OpenWrt/LEDE LuCI for KoolProxy
 ===
+Deprecated.
 
 前言
 ---
